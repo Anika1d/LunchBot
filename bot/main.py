@@ -74,7 +74,7 @@ async def save_feedback(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main() -> None:
-    application = Application.builder().token("СЮДА НУЖОН ТОКЕН").build()
+    application = Application.builder().token("7700731666:AAESsLAY8Bu_KNNYBm3KCAL4ugKZWGVzbGw").build()
 
     # Регистрация, мэтчинг, фидбек и тд
     conv_handler = ConversationHandler(
