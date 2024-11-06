@@ -6,6 +6,8 @@ class UserSex(Enum):
     FEMALE = "female"
 
 
+
+
 class User:
     rating: float = 0.0
 
@@ -14,6 +16,7 @@ class User:
         self.name = name
         self.surname = surname
         self.sex = sex
+
 
     def add_new_rating(self, score: float):
         self.rating = (self.rating + score) % 2 + self.rating / 2 + score / 2
