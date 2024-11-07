@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, ConversationHandler, filters
+from telegram import ReplyKeyboardMarkup
 from data.user import User, UserSex
 import logging
 from uuid import uuid4
@@ -16,14 +17,6 @@ users = {}
 lunch_matches = {}
 feedbacks = {}
 
-# Рега
-async def start(update: Update, context: CallbackContext) -> int:
-    await update.message.reply_text(
-        "Привет! 👋 \nТы попал в LunchBuddy – бота, который поможет тебе найти классную компанию для обеда!\n"
-        "Чтобы найти тебе идеальных сотрапезников, ответь на пару вопросов о себе и заполни короткую анкету.\n"
-        "Поехали! 🚀\n\nВведите Имя (или псевдоним):"
-    )
-    return GET_NAME
 
 # Имя
 async def get_name(update: Update, context: CallbackContext) -> int:
@@ -103,11 +96,6 @@ async def remind(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text("У Вас нет запланированных встреч на обед.")
 
-# Получение фидбека
-async def feedback(update: Update, context: CallbackContext) -> int:
-    await update.message.reply_text("Оцените Ваш обед от 1 до 5 и оставьте отзыв о своём опыте:")
-    return FEEDBACK
-
 # Сохранение фидбека
 async def save_feedback(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
@@ -132,7 +120,64 @@ async def save_feedback(update: Update, context: CallbackContext) -> int:
     
     return ConversationHandler.END
 
-# КХ
+# Функция для создания навигационного меню
+async def show_navigation_menu(update: Update, context: CallbackContext) -> None:
+    """Отображает меню навигации в виде кнопок."""
+    navigation_buttons = ReplyKeyboardMarkup(
+        [
+            ["/start", "/find_buddy"],
+            ["/feedback", "/edit_profile"],
+        ],
+        resize_keyboard=True,  # Чтобы кнопки подстраивались под экран
+        one_time_keyboard=False,  # Чтобы кнопки оставались постоянно
+    )
+    await update.message.reply_text(
+        "Выберите действие из меню ниже:",
+        reply_markup=navigation_buttons
+    )
+
+# Добавляем отображение меню навигации в командах
+async def start(update: Update, context: CallbackContext) -> int:
+    """Стартовая команда с отображением меню навигации."""
+    await show_navigation_menu(update, context)
+    await update.message.reply_text(
+        "Привет! 👋 \nТы попал в LunchBuddy – бота, который поможет тебе найти классную компанию для обеда!\n"
+        "Чтобы найти идеальных сотрапезников, ответь на пару вопросов о себе и заполни короткую анкету.\n"
+        "Поехали! 🚀\n\nВведите имя (или псевдоним):"
+    )
+    return GET_NAME
+
+async def feedback(update: Update, context: CallbackContext) -> int:
+    """Команда для получения фидбэка с меню навигации."""
+    await show_navigation_menu(update, context)
+    await update.message.reply_text("Оцените Ваш обед от 1 до 5 и оставьте отзыв о своём опыте:")
+    return FEEDBACK
+
+async def edit_profile(update: Update, context: CallbackContext) -> int:
+    """Команда для редактирования анкеты с меню навигации."""
+    user_id = update.message.from_user.id
+    if user_id in users:
+        del users[user_id]  # Удаляем данные пользователя
+    await show_navigation_menu(update, context)
+    await update.message.reply_text(
+        "Вы начали редактирование профиля. Анкета будет заполнена заново. Введите имя:"
+    )
+    return GET_NAME
+
+# Добавляем отображение меню при вызове /help
+async def help_command(update: Update, context: CallbackContext) -> None:
+    """Отправляет список команд и отображает меню навигации."""
+    await show_navigation_menu(update, context)
+    await update.message.reply_text(
+        "🤖 Доступные команды:\n\n"
+        "/start - Начать регистрацию и заполнение анкеты\n"
+        "/find_buddy - Найти напарника для обеда\n"
+        "/feedback - Оставить отзыв о проведенном обеде\n"
+        "/edit_profile - Редактировать свою анкету (перезапуск регистрации)\n"
+        "/help - Показать это сообщение"
+    )
+
+# Обновленный main() с навигационным меню
 def main() -> None:
     application = Application.builder().token("7700731666:AAESsLAY8Bu_KNNYBm3KCAL4ugKZWGVzbGw").build()
 
@@ -151,13 +196,16 @@ def main() -> None:
     )
     application.add_handler(conv_handler)
 
-    # Другие комманды
+    # Другие команды
     application.add_handler(CommandHandler("find_buddy", find_buddy))
     application.add_handler(CommandHandler("remind", remind))
     application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("edit_profile", edit_profile))
 
     # Ланч
     application.run_polling()
+
 
 if __name__ == "__main__":
     main()
