@@ -1,7 +1,7 @@
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, ConversationHandler, filters
 from telegram import ReplyKeyboardMarkup
-from user import UserSex, User
+from data.user import UserSex, User
 import logging
 from uuid import uuid4
 
