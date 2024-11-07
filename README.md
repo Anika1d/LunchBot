@@ -13,7 +13,7 @@ Telegram-бот для подбора компании на обед в зави
 ## Требования
 - Python 3.7+
 - PostgreSQL
-- Библиотеки: `python-telegram-bot`, `asyncpg`
+- Библиотеки: `python-telegram-bot`, `psycopg2`
 
 ## Установка
 ### 1. Клонируйте репозиторий
