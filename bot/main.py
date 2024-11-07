@@ -1,12 +1,11 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, ConversationHandler, filters
-from data.user import User, UserSex
+from data.user import UserSex
 import logging
 from uuid import uuid4
+from domain.app.ServicesMatches import ServicesMatches
+from domain.tables.user_table import  USER_TABLE
 
-from domain.api import Databases, UserTable
-
-db = UserTable()
 # Логгинг
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ async def get_name(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
     name = update.message.text
     users[user_id] = {"username": update.message.from_user.username, "name": name}
-    db.setUserName(name=name, userId=user_id)
+    USER_TABLE.setUserName(name=name, userId=user_id)
     await update.message.reply_text("Пол:",
                                     reply_markup=ReplyKeyboardMarkup([["Мужской", "Женский"]], one_time_keyboard=True))
     return GET_SEX
@@ -46,7 +45,7 @@ async def get_sex(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
     sex = UserSex.MALE if update.message.text == "Мужской" else UserSex.FEMALE
     users[user_id]["sex"] = sex
-    db.setUserGender(sex,user_id)
+    USER_TABLE.setUserGender(sex, user_id)
     await update.message.reply_text(
         "Выберите, с кем Вам было бы комфортно обедать?",
         reply_markup=ReplyKeyboardMarkup([["Девушка", "Парень", "Компания", "Неважно"]], one_time_keyboard=True)
@@ -91,7 +90,6 @@ async def find_buddy(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     user_pref = users[user_id].get("partner_preference")
     user_lunch_time = users[user_id].get("lunch_time")
-
     for uid, data in users.items():
         # Мэтч
         if uid != user_id and data.get("partner_preference") == user_pref and data.get("lunch_time") == user_lunch_time:
@@ -152,8 +150,9 @@ async def save_feedback(update: Update, context: CallbackContext) -> int:
 
 # КХ
 def main() -> None:
-    application = Application.builder().token("7700731666:AAESsLAY8Bu_KNNYBm3KCAL4ugKZWGVzbGw").build()
-
+    application = Application.builder().token("7700731666:AAESsLAY8Bu_KNNYBm3KCAL4ugKZWGVzbGw")
+    application.build()
+    app = ServicesMatches(application._bot)
     # рег
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],

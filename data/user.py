@@ -20,10 +20,10 @@ class UserStatus(Enum):
 
 
 class User:
-    rating: float = 0.0
 
-    def __init__(self, telegram_id: str, name: str, surname: str, sex: UserSex,
+    def __init__(self, telegram_id: str, name: str, surname: str, sex: UserSex, chat_id: int,
                  status: UserStatus = UserStatus.INACTIVE):
+        self.chat_id = chat_id
         self.telegram_id = telegram_id
         self.name = name
         self.surname = surname
@@ -35,3 +35,4 @@ class User:
 
     def changeUserStatus(self, new):
         self.status = new
+    rating: float = 0.0
