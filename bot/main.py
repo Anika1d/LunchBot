@@ -95,8 +95,16 @@ async def get_lunch_time(update: Update, context: CallbackContext) -> int:
     
     await update.message.reply_text(
         f"Вы успешно зарегистрированы. Приятного аппетита!", reply_markup = ReplyKeyboardRemove()
-        )
+    )
     
+    await update.message.reply_text(
+        "Нажмите кнопку ниже, чтобы найти компаньона на обед!", reply_markup = ReplyKeyboardMarkup(
+            [["/find_buddy"]], 
+            one_time_keyboard = True, 
+            resize_keyboard = True
+        )
+    )
+
     show_navigation_menu(update, context)
     return ConversationHandler.END
 
