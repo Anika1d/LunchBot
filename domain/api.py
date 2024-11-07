@@ -1,12 +1,13 @@
 import psycopg2
-from data.user import UserSex
-
+import datetime
+from data.user import UserSex, User
+from datetime import datetime
 
 
 class Databases:
 
     def __init__(self):
-        DATABASE_URL = "postgresql://postgres:2002@localhost:5432/tg_LunchBot"
+        DATABASE_URL = "postgresql://postgres:15092002@localhost:5433/tg_LunchBot"
 
         create_tables_sql = """
         CREATE TABLE users (
@@ -15,7 +16,7 @@ class Databases:
             username VARCHAR(255),
             phone_number VARCHAR(20),
             rating REAL,
-            gender VARCHAR(10) CHECK (gender IN ('Мужской', 'Женский', 'Другой'))
+            gender VARCHAR(10) CHECK (gender IN ('male', 'female'))
         );
 
         CREATE TABLE matches (
@@ -126,7 +127,13 @@ class Databases:
             return []
 
 
+class UserTable:
 
+    def __init__(self):
+        self.db = Databases()
 
+    def setUserName(self, name: str, userId: int):
+        self.db.setUserName(name, userId)
 
-DATABASES = Databases()
+    def setUserGender(self, sex: UserSex, userId: int):
+        self.db.setUserGender(sex, userId)
