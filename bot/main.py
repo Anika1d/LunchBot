@@ -1,7 +1,7 @@
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, ConversationHandler, filters
 from telegram import ReplyKeyboardMarkup
-from data.user import UserSex, User
+from user import UserSex, User
 import logging
 from uuid import uuid4
 
@@ -51,7 +51,7 @@ async def get_name(update: Update, context: CallbackContext) -> int:
     name = update.message.text
     if name.startswith('/'):
         await update.message.reply_text(
-            "Неверный формат имени. Пожалуйста, введите по-другому."
+            "Неверный формат имени. Пожалуйста, введите иначе."
         )
         return GET_NAME
     users[user_id] = {"username": update.message.from_user.username, "name": name}
@@ -75,6 +75,37 @@ async def get_sex(update: Update, context: CallbackContext) -> int:
     )
     return GET_PARTNER_PREFERENCE
 
+# async def find_buddies(update: Update, context: CallbackContext) -> None:
+#     user_id = update.message.from_user.id
+#     user_pref = users.get(user_id, {}).get("partner_preference")
+#     user_lunch_time = users.get(user_id, {}).get("lunch_time")
+
+#     if user_pref is None or user_lunch_time is None:
+#         await context.bot.send_message(chat_id=user_id, text="Укажите ваши предпочтения и время обеда!")
+#         return
+
+#     matching_groups = []
+#     for uid, data in users.items():
+#         if uid != user_id:
+#             pref = data.get("partner_preference")
+#             lunch_time = data.get("lunch_time")
+#             username = data.get("username") # Добавлена проверка на наличие username
+
+#             #Проверка на наличие всех необходимых данных
+#             if pref is not None and lunch_time is not None and username is not None:
+#                 if (user_pref, user_lunch_time) == (pref, lunch_time):
+#                     matching_groups.append(uid)
+
+
+#     if len(matching_groups) == 4: #нужно минимум 2 человека, так как мы добавляем  пользователя в список
+#         suitable_buddies = matching_groups + [user_id]
+#         usernames = [f"@{users[uid]['username']}" for uid in suitable_buddies]
+#         message = f"Для обеда подходят: {', '.join(usernames)}"
+#         await context.bot.send_message(chat_id=user_id, text=message)
+#     else:
+#         await context.bot.send_message(chat_id=user_id, text="Пока нет подходящих людей для обеда.")
+
+
 # Префы
 async def get_partner_preference(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
@@ -94,18 +125,17 @@ async def get_lunch_time(update: Update, context: CallbackContext) -> int:
     users[user_id]["lunch_time"] = update.message.text
     
     await update.message.reply_text(
-        f"Вы успешно зарегистрированы. Приятного аппетита!", reply_markup = ReplyKeyboardRemove()
+        f"Вы успешно зарегистрированы. Приятного аппетита! ", reply_markup = ReplyKeyboardRemove()
     )
     
     await update.message.reply_text(
-        "Нажмите кнопку ниже, чтобы найти компаньона на обед!", reply_markup = ReplyKeyboardMarkup(
+        "🍕 Нажмите кнопку ниже, чтобы найти компаньона на обед! 🍕", reply_markup = ReplyKeyboardMarkup(
             [["/find_buddy"]], 
             one_time_keyboard = True, 
             resize_keyboard = True
         )
     )
 
-    show_navigation_menu(update, context)
     return ConversationHandler.END
 
 # Функция для регистрации предпочтений (опционально, пока пох я думаю)
@@ -170,16 +200,28 @@ async def save_feedback(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 async def feedback(update: Update, context: CallbackContext) -> int:
-    """Команда для получения фидбэка с меню навигации."""
     await show_navigation_menu(update, context)
     await update.message.reply_text(
         "Оцените Ваш обед:", 
         reply_markup=ReplyKeyboardMarkup(
             [["1", "2", "3"], ["4", "5"]],
             one_time_keyboard=True,
-        ),
+            resize_keyboard=True
+        )
     )
     return FEEDBACK
+
+async def feedback_received(update: Update, context: CallbackContext) -> int:
+    await update.message.reply_text(
+        "Спасибо за Ваш отзыв! \n"
+        "Редактируйте Вашу анкету или начните поиск заново!",
+        reply_markup=ReplyKeyboardMarkup(
+            [["/start", "/find_buddy"]], 
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+    )
+    return ConversationHandler.END
 
 # async def edit_profile(update: Update, context: CallbackContext) -> int:
 #     """Команда для редактирования анкеты с меню навигации."""
