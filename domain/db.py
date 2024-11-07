@@ -56,11 +56,11 @@ class Databases:
         except psycopg2.Error as e:
             print(f"Ошибка при создании таблиц: {e}")
 
-    def setUserName(self, name: str, userId: int):
+    def set_user_name(self, name: str, userId: int):
         self.cur.execute("UPDATE users SET name = ? WHERE id = ?", (name, userId))
         self.connection.commit()
 
-    def setUserGender(self, sex: UserSex, userId: int):
+    def set_user_gender(self, sex: UserSex, userId: int):
         try:
             self.cur.execute("UPDATE users SET gender = ? WHERE id = ?", (sex.value, userId))
             self.connection.commit()
@@ -69,16 +69,16 @@ class Databases:
             print(f"Ошибка при обновлении гендера пользователя: {e}")
             return False
 
-    def setTime(self, timeStart: datetime, timeEnd: datetime, userId: int):
+    def set_time(self, time_start: datetime, time_end: datetime, user_id: int):
         try:
-            if timeStart >= timeEnd:
+            if time_start >= time_end:
                 raise ValueError("Время окончания должно быть позже времени начала.")
 
             self.cur.execute("""
                 INSERT INTO preferences (user_id, start_time, end_time) 
                 VALUES (%s, %s, %s) 
                 ON CONFLICT (user_id) DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time;
-            """, (userId, timeStart, timeEnd))
+            """, (user_id, time_start, time_end))
             self.connection.commit()
             return True
 
@@ -92,7 +92,6 @@ class Databases:
 
     def create_user(self, chat_id: int, user_telegram_id: int):
         try:
-            # SQL-запрос для вставки данных
             insert_query = sql.SQL("""
                 INSERT INTO users (telegram_id, chat_id)
                 VALUES (%s, %s)
@@ -100,12 +99,12 @@ class Databases:
             self.cur.execute(insert_query, (user_telegram_id, chat_id))
             return True
         except Exception as e:
-            print(f"Ошибка при обновлении чат айди пользователя: {e}")
+            print(f"Ошибка при создание пользователя: {e}")
             return False
 
-    def getUser(self, telegramId: str):
+    def get_user(self, telegram_id: str):
         try:
-            self.cur.execute("SELECT * FROM users WHERE tg_id = ?", (telegramId,))
+            self.cur.execute("SELECT * FROM users WHERE tg_id = ?", (telegram_id,))
             user = self.cur.fetchone()  # Получаем первую найденную строку
             return user  # Возвращаем кортеж с данными пользователя или None, если пользователь не найден
 
@@ -113,6 +112,17 @@ class Databases:
             print(f"Ошибка при получении пользователя: {e}")
             return None
 
+    def create_preference(self, user_id: int):
+        try:
+            insert_query = sql.SQL("""
+                    INSERT INTO preferences  (user_id)
+                    VALUES (%s)
+                """)
+            self.cur.execute(insert_query, (user_id,))
+            return True
+        except Exception as e:
+            print(f"Ошибка при создание предпочтений: {e}")
+            return False
     # def search(self, user: User):
     #     try:
     #         start_time = user.start_time

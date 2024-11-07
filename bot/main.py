@@ -1,13 +1,10 @@
-from telegram import Update, ReplyKeyboardMarkup
-from telegram import ReplyKeyboardRemove, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, ConversationHandler, filters
 from data.user import UserSex
 from telegram import ReplyKeyboardMarkup
-from user import UserSex, User
 import logging
-from uuid import uuid4
 from domain.app.ServicesMatches import ServicesMatches
-from domain.tables.user_table import  USER_TABLE
+from domain.tables.user_table import USER_TABLE
 
 # Логгинг
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -16,10 +13,9 @@ logger = logging.getLogger(__name__)
 # КХ
 REGISTER, GET_NAME, GET_SEX, GET_PARTNER_PREFERENCE, GET_LUNCH_TIME, PREFERENCES, FEEDBACK = range(7)
 
-# Пародия на БД
-users = {}
 lunch_matches = {}
 feedbacks = {}
+
 
 # Функция для создания навигационного меню
 async def show_navigation_menu(update: Update, context: CallbackContext) -> None:
@@ -29,13 +25,14 @@ async def show_navigation_menu(update: Update, context: CallbackContext) -> None
             ["/start", "/find_buddy"],
             ["/feedback", "/edit_profile"],
         ],
-        resize_keyboard = True,  # Чтобы кнопки подстраивались под экран
-        one_time_keyboard = False,  # Чтобы кнопки оставались постоянно
+        resize_keyboard=True,  # Чтобы кнопки подстраивались под экран
+        one_time_keyboard=False,  # Чтобы кнопки оставались постоянно
     )
     await update.message.reply_text(
         "Выберите действие из меню ниже:",
-        reply_markup = navigation_buttons
+        reply_markup=navigation_buttons
     )
+
 
 # Добавляем отображение меню навигации в командах
 async def start(update: Update, context: CallbackContext) -> int:
@@ -47,6 +44,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     )
     return GET_NAME
 
+
 # Имя
 async def get_name(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
@@ -56,26 +54,29 @@ async def get_name(update: Update, context: CallbackContext) -> int:
             "Неверный формат имени. Пожалуйста, введите по-другому."
         )
         return GET_NAME
-    users[user_id] = {"username": update.message.from_user.username, "name": name}
 
-    await update.message.reply_text("Пол:", reply_markup=ReplyKeyboardMarkup([["Мужской", "Женский"]], one_time_keyboard=True))
+    USER_TABLE.set_user_name(user_id=user_id, name=update.message.from_user.username if (name is None) else name)
+    await update.message.reply_text("Пол:",
+                                    reply_markup=ReplyKeyboardMarkup([["Мужской", "Женский"]], one_time_keyboard=True))
     return GET_SEX
+
 
 # Пол
 async def get_sex(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
     sex = UserSex.MALE if update.message.text == "Мужской" else UserSex.FEMALE
-    users[user_id]["sex"] = sex
+    USER_TABLE.set_user_gender(user_id=user_id, sex=sex)
     await update.message.reply_text(
         "Выберите, с кем Вам было бы комфортно обедать?",
         reply_markup=ReplyKeyboardMarkup([["Девушка", "Парень", "Компания", "Неважно"]], one_time_keyboard=True)
     )
     return GET_PARTNER_PREFERENCE
 
+
 # Префы
 async def get_partner_preference(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
-    users[user_id]["partner_preference"] = update.message.text
+
     await update.message.reply_text(
         "Желаемое время обеда:",
         reply_markup=ReplyKeyboardMarkup(
@@ -85,17 +86,19 @@ async def get_partner_preference(update: Update, context: CallbackContext) -> in
     )
     return GET_LUNCH_TIME
 
+
 # Время
 async def get_lunch_time(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
     users[user_id]["lunch_time"] = update.message.text
 
     await update.message.reply_text(
-        f"Вы успешно зарегистрированы. Приятного аппетита!", reply_markup = ReplyKeyboardRemove()
-        )
+        f"Вы успешно зарегистрированы. Приятного аппетита!", reply_markup=ReplyKeyboardRemove()
+    )
 
     show_navigation_menu(update, context)
     return ConversationHandler.END
+
 
 # Функция для регистрации предпочтений (опционально, пока пох я думаю)
 async def save_preferences(update: Update, context: CallbackContext) -> int:
@@ -103,6 +106,7 @@ async def save_preferences(update: Update, context: CallbackContext) -> int:
     users[user_id]["preferences"] = update.message.text
     await update.message.reply_text("Ваши предпочтения сохранены.")
     return ConversationHandler.END
+
 
 # Мэтчинг
 async def find_buddy(update: Update, context: CallbackContext) -> None:
@@ -119,7 +123,9 @@ async def find_buddy(update: Update, context: CallbackContext) -> None:
             await context.bot.send_message(chat_id=uid, text=f"Для обеда подходит: @{users[user_id]['username']}")
             return
 
-    await update.message.reply_text("Пока не удалось найти подходящего напарника для обеда. Попробуйте, пожалуйста, позже.")
+    await update.message.reply_text(
+        "Пока не удалось найти подходящего напарника для обеда. Попробуйте, пожалуйста, позже.")
+
 
 # Ремайндер
 async def remind(update: Update, context: CallbackContext) -> None:
@@ -133,6 +139,7 @@ async def remind(update: Update, context: CallbackContext) -> None:
         )
     else:
         await update.message.reply_text("У Вас нет запланированных встреч на обед.")
+
 
 # Сохранение фидбека
 async def save_feedback(update: Update, context: CallbackContext) -> int:
@@ -158,11 +165,13 @@ async def save_feedback(update: Update, context: CallbackContext) -> int:
 
     return ConversationHandler.END
 
+
 async def feedback(update: Update, context: CallbackContext) -> int:
     """Команда для получения фидбэка с меню навигации."""
     await show_navigation_menu(update, context)
     await update.message.reply_text("Оцените Ваш обед от 1 до 5 и оставьте отзыв о своём опыте:")
     return FEEDBACK
+
 
 async def edit_profile(update: Update, context: CallbackContext) -> int:
     """Команда для редактирования анкеты с меню навигации."""
@@ -175,6 +184,7 @@ async def edit_profile(update: Update, context: CallbackContext) -> int:
     )
     return GET_NAME
 
+
 # Добавляем отображение меню при вызове /help
 async def help_command(update: Update, context: CallbackContext) -> None:
     """Отправляет список команд и отображает меню навигации."""
@@ -186,6 +196,7 @@ async def help_command(update: Update, context: CallbackContext) -> None:
         "/feedback - Оставить отзыв о проведенном обеде\n"
         "/edit_profile - Редактировать свою анкету (перезапуск регистрации)\n"
     )
+
 
 # Обновленный main() с навигационным меню
 def main() -> None:
