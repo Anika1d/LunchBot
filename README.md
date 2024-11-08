@@ -57,9 +57,8 @@ python main.py
 ## Использование
 После запуска бота вы можете начать взаимодействовать с ним, отправив команду `/start`. затем настраивайте свои предпочтения и находите партнёров для обеда!
 
-== Ссылки == 
-* [https://docs.google.com/presentation/d/1VgW0eXWwbXGYKvlVOUk3uINRBx3Ue1aaSPLEYfPZKLg/edit?usp=sharing Презентация]
-
+## Ссылки 
+[Презентация](https://docs.google.com/presentation/d/1VgW0eXWwbXGYKvlVOUk3uINRBx3Ue1aaSPLEYfPZKLg/edit?usp=sharing)
 
 ## Контакты
 
